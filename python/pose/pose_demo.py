@@ -145,6 +145,6 @@ def predict_pose_from(image_names,
 
 
 if __name__ == '__main__':
-    _logging.basicConfig(level=_logging.INFO)
+    _logging.basicConfig(level=_logging.ERROR)
     # pylint: disable=no-value-for-parameter
     predict_pose_from()

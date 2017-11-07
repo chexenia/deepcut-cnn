@@ -12,9 +12,11 @@ Authors: Christoph Lassner, based on the MATLAB implementation by Eldar
   Insafutdinov.
 """
 
+import logging as _logging
+
 import numpy as _np
 import scipy as _scipy
-import logging as _logging
+
 import caffe as _caffe
 
 

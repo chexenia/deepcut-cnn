@@ -30,11 +30,20 @@ def _npcircle(image, cx, cy, radius, color, transparency=0.0):
     radius = int(radius)
     cx = int(cx)
     cy = int(cy)
-    y, x = _np.ogrid[-radius: radius, -radius: radius]
+    ny, nx = image.shape[:2]
+    y_radius_0 = radius if cy - radius >= 0 else cy
+    y_radius_1 = radius if cy + radius <= ny else ny - cy
+    x_radius_0 = radius if cx - radius >= 0 else cx
+    x_radius_1 = radius if cx + radius <= nx else nx - cx
+    y, x = _np.ogrid[-y_radius_1:y_radius_1, -x_radius_0:x_radius_1]
     index = x**2 + y**2 <= radius**2
-    image[cy-radius:cy+radius, cx-radius:cx+radius][index] = (
-        image[cy-radius:cy+radius, cx-radius:cx+radius][index].astype('float32') * transparency +
-        _np.array(color).astype('float32') * (1.0 - transparency)).astype('uint8')
+    cy0 = cy - radius
+    cy1 = cy + radius
+    cx0 = cx - radius
+    cx1 = cx + radius
+    image[cy0:cy1, cx0:cx1][index] = (
+        image[cy0:cy1, cx0:cx1][index].astype('float32') * transparency
+        + _np.array(color).astype('float32') * (1.0 - transparency)).astype('uint8')
 
 
 ###############################################################################

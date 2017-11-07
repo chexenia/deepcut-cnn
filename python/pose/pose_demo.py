@@ -90,12 +90,15 @@ def predict_pose_from(image_names,
                       gpu=0):
     """
     Load an image file, predict the pose and write it out.
-    
+
     `IMAGE_NAME` may be an image or a directory, for which all images with
     `folder_image_suffix` will be processed.
     """
-    model_def = '../../models/deepercut/ResNet-152.prototxt'
-    model_bin = '../../models/deepercut/ResNet-152.caffemodel'
+    script_dir = _os.path.dirname(_os.path.realpath(__file__))
+    model_def = _os.path.join(script_dir,
+            '../../models/deepercut/ResNet-152.prototxt')
+    model_bin = _os.path.join(script_dir,
+            '../../models/deepercut/ResNet-152.caffemodel')
     scales = [float(val) for val in scales.split(',')]
     images = image_names
     process_folder = False

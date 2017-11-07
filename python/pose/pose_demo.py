@@ -123,7 +123,9 @@ def predict_pose_from(image_names,
             _LOGGER.warn("The image is grayscale! This may deteriorate performance!")
             image = _np.dstack((image, image, image))
         else:
-            image = image[:, :, ::-1]    
+            image = image[:, :, ::-1]
+            if image.shape[2] > 3:
+                image = image[:, :, :3]
         pose = estimate_pose(image, model_def, model_bin, scales)
         _np.savez_compressed(out_name, pose=pose)
         if visualize:

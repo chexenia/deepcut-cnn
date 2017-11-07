@@ -76,6 +76,7 @@ def estimate_pose(image, model_def, model_bin, scales=None):  # pylint: disable=
         _MODEL = _caffe.Net(model_def, model_bin, _caffe.TEST)
         _LOGGER.info("Done!")
     _LOGGER.debug("Processing image...")
+    assert(image.shape[2] == 3)
     im_orig = image.copy()
     _LOGGER.debug("Image shape: %s.", im_orig.shape)
     best_pose = None
@@ -96,7 +97,7 @@ def estimate_pose(image, model_def, model_bin, scales=None):  # pylint: disable=
         im_right = _np.tile(im_right_pixels, (1, pad_size, 1))
         image = _np.hstack((image, im_right))
         image = _scipy.misc.imresize(image, scale_factor, interp='bilinear')
-        image = image.astype('float32') - _MEAN
+        image = image.astype('float32')[:,:,:3] - _MEAN
 
         net_input = _np.zeros((im_bg_height, im_bg_width, 3), dtype='float32')
         net_input[:min(net_input.shape[0], image.shape[0]),

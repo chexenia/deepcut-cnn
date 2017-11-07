@@ -247,6 +247,7 @@ def _cnn_process_image(model, net_input):
 
 def _cutoff_tile(sm, num_tiles, idx, cut_off, is_x):
     """Cut the valid parts of the CNN predictions for a tile."""
+    cut_off = int(cut_off)
     if is_x:
         sm = sm.transpose((1, 0, 2, 3))
     if num_tiles == 1:

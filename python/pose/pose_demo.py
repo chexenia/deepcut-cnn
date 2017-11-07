@@ -15,7 +15,6 @@ Authors: Christoph Lassner, based on the MATLAB implementation by Eldar
 # pylint: disable=invalid-name
 import os as _os
 import logging as _logging
-import glob as _glob
 import numpy as _np
 import scipy as _scipy
 import click as _click
@@ -43,8 +42,9 @@ def _npcircle(image, cx, cy, radius, color, transparency=0.0):
 ###############################################################################
 
 @_click.command()
-@_click.argument('image_name',
-                 type=_click.Path(exists=True, dir_okay=True, readable=True))
+@_click.argument('image_names',
+                 type=_click.Path(exists=True, readable=True),
+                 nargs=-1)
 @_click.option('--out_name',
                type=_click.Path(dir_okay=True, writable=True),
                help='The result location to use. By default, use `image_name`_pose.npz.',
@@ -72,7 +72,7 @@ def _npcircle(image, cx, cy, radius, color, transparency=0.0):
                type=_click.INT,
                help='GPU device id.',
                default=0)
-def predict_pose_from(image_name,
+def predict_pose_from(image_names,
                       out_name=None,
                       scales='1.',
                       visualize=True,
@@ -88,15 +88,8 @@ def predict_pose_from(image_name,
     model_def = '../../models/deepercut/ResNet-152.prototxt'
     model_bin = '../../models/deepercut/ResNet-152.caffemodel'
     scales = [float(val) for val in scales.split(',')]
-    if _os.path.isdir(image_name):
-        folder_name = image_name[:]
-        _LOGGER.info("Specified image name is a folder. Processing all images "
-                     "with suffix %s.", folder_image_suffix)
-        images = _glob.glob(_os.path.join(folder_name, '*' + folder_image_suffix))
-        process_folder = True
-    else:
-        images = [image_name]
-        process_folder = False
+    images = image_names
+    process_folder = False
     if use_cpu:
         _caffe.set_mode_cpu()
     else:

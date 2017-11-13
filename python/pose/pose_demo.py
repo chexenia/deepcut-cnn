@@ -15,7 +15,6 @@ Authors: Christoph Lassner, based on the MATLAB implementation by Eldar
 # pylint: disable=invalid-name
 import os as _os
 import logging as _logging
-import glob as _glob
 import numpy as _np
 import scipy as _scipy
 import click as _click
@@ -31,11 +30,20 @@ def _npcircle(image, cx, cy, radius, color, transparency=0.0):
     radius = int(radius)
     cx = int(cx)
     cy = int(cy)
-    y, x = _np.ogrid[-radius: radius, -radius: radius]
+    ny, nx = image.shape[:2]
+    y_radius_0 = radius if cy - radius >= 0 else cy
+    y_radius_1 = radius if cy + radius <= ny else ny - cy
+    x_radius_0 = radius if cx - radius >= 0 else cx
+    x_radius_1 = radius if cx + radius <= nx else nx - cx
+    y, x = _np.ogrid[-y_radius_1:y_radius_1, -x_radius_0:x_radius_1]
     index = x**2 + y**2 <= radius**2
-    image[cy-radius:cy+radius, cx-radius:cx+radius][index] = (
-        image[cy-radius:cy+radius, cx-radius:cx+radius][index].astype('float32') * transparency +
-        _np.array(color).astype('float32') * (1.0 - transparency)).astype('uint8')
+    cy0 = cy - radius
+    cy1 = cy + radius
+    cx0 = cx - radius
+    cx1 = cx + radius
+    image[cy0:cy1, cx0:cx1][index] = (
+        image[cy0:cy1, cx0:cx1][index].astype('float32') * transparency
+        + _np.array(color).astype('float32') * (1.0 - transparency)).astype('uint8')
 
 
 ###############################################################################
@@ -43,8 +51,9 @@ def _npcircle(image, cx, cy, radius, color, transparency=0.0):
 ###############################################################################
 
 @_click.command()
-@_click.argument('image_name',
-                 type=_click.Path(exists=True, dir_okay=True, readable=True))
+@_click.argument('image_names',
+                 type=_click.Path(exists=True, readable=True),
+                 nargs=-1)
 @_click.option('--out_name',
                type=_click.Path(dir_okay=True, writable=True),
                help='The result location to use. By default, use `image_name`_pose.npz.',
@@ -72,7 +81,7 @@ def _npcircle(image, cx, cy, radius, color, transparency=0.0):
                type=_click.INT,
                help='GPU device id.',
                default=0)
-def predict_pose_from(image_name,
+def predict_pose_from(image_names,
                       out_name=None,
                       scales='1.',
                       visualize=True,
@@ -81,22 +90,18 @@ def predict_pose_from(image_name,
                       gpu=0):
     """
     Load an image file, predict the pose and write it out.
-    
+
     `IMAGE_NAME` may be an image or a directory, for which all images with
     `folder_image_suffix` will be processed.
     """
-    model_def = '../../models/deepercut/ResNet-152.prototxt'
-    model_bin = '../../models/deepercut/ResNet-152.caffemodel'
+    script_dir = _os.path.dirname(_os.path.realpath(__file__))
+    model_def = _os.path.join(script_dir,
+            '../../models/deepercut/ResNet-152.prototxt')
+    model_bin = _os.path.join(script_dir,
+            '../../models/deepercut/ResNet-152.caffemodel')
     scales = [float(val) for val in scales.split(',')]
-    if _os.path.isdir(image_name):
-        folder_name = image_name[:]
-        _LOGGER.info("Specified image name is a folder. Processing all images "
-                     "with suffix %s.", folder_image_suffix)
-        images = _glob.glob(_os.path.join(folder_name, '*' + folder_image_suffix))
-        process_folder = True
-    else:
-        images = [image_name]
-        process_folder = False
+    images = image_names
+    process_folder = False
     if use_cpu:
         _caffe.set_mode_cpu()
     else:
@@ -118,13 +123,15 @@ def predict_pose_from(image_name,
             _LOGGER.warn("The image is grayscale! This may deteriorate performance!")
             image = _np.dstack((image, image, image))
         else:
-            image = image[:, :, ::-1]    
+            image = image[:, :, ::-1]
+            if image.shape[2] > 3:
+                image = image[:, :, :3]
         pose = estimate_pose(image, model_def, model_bin, scales)
         _np.savez_compressed(out_name, pose=pose)
         if visualize:
             visim = image[:, :, ::-1].copy()
             colors = [[255, 0, 0],[0, 255, 0],[0, 0, 255],[0,245,255],[255,131,250],[255,255,0],
-                      [255, 0, 0],[0, 255, 0],[0, 0, 255],[0,245,255],[255,131,250],[255,255,0],
+                      [128, 0, 0],[0, 128, 0],[0, 0, 128],[0,122,128],[128,67,125],[128,128,0],
                       [0,0,0],[255,255,255]]
             for p_idx in range(14):
                 _npcircle(visim,
@@ -138,6 +145,6 @@ def predict_pose_from(image_name,
 
 
 if __name__ == '__main__':
-    _logging.basicConfig(level=_logging.INFO)
+    _logging.basicConfig(level=_logging.ERROR)
     # pylint: disable=no-value-for-parameter
     predict_pose_from()

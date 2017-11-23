@@ -87,7 +87,7 @@ void sample_negatives(Dtype *label, int k, int sc_map_width, int sc_map_height,
 
 template<typename Dtype>
 void negate_symmetric(Dtype *label,int sc_map_width, int sc_map_height,
-                      int item_id, const std::vector<std::pair<int,int>> symm)
+                      int item_id, const std::vector<std::pair<int,int> > symm)
 {
     for(int idx = 0; idx < symm.size(); ++idx)
     {
@@ -162,7 +162,7 @@ void sticks_segmentation(Dtype *label, float scale,
     float limb_size_coefs[num_sticks] = {1.0, 1.0, 1.0, 1.0, 0.8, 0.8, 0.8, 0.8, 1.0};
 
     int symmetric_limbs[][2] = {{0, 2}, {1, 3}, {4, 6}, {5, 7}};
-    std::vector<std::pair<int, int>> symmetric_pairs;
+    std::vector<std::pair<int, int> > symmetric_pairs;
     for(int k = 0; k < 4; ++k)
     {
         int l0 = symmetric_limbs[k][0];
